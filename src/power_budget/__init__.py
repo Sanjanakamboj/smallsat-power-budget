@@ -24,6 +24,13 @@ from power_budget.solar import (
     EnergyClosureResult,
     size_solar_array,
 )
+from power_budget.battery import (
+    BatteryConfig,
+    BatterySizingResult,
+    RechargeClosureResult,
+    SOCProfile,
+    size_battery,
+)
 
 __all__ = [
     "Mode",
@@ -36,6 +43,11 @@ __all__ = [
     "SolarArraySizingResult",
     "EnergyClosureResult",
     "size_solar_array",
+    "BatteryConfig",
+    "BatterySizingResult",
+    "RechargeClosureResult",
+    "SOCProfile",
+    "size_battery",
 ]
 
 __version__ = "0.1.0"

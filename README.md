@@ -8,12 +8,13 @@ Python package rather than a one-off notebook.
 
 ## Status
 
-**Milestone 1 — EPS Foundations, Operating Modes & Energy Balance**
-(complete) and **Milestone 2 — Solar Array Sizing & Sunlight Energy
-Closure** (complete). See [`docs/methodology.md`](docs/methodology.md)
-and [`docs/solar_array_methodology.md`](docs/solar_array_methodology.md)
-for the full write-ups. Battery sizing is the next milestone and is
-not yet implemented.
+**Milestone 1 — EPS Foundations**, **Milestone 2 — Solar Array
+Sizing**, and **Milestone 3 — Battery Sizing & Eclipse Energy
+Storage** are complete. See
+[`docs/methodology.md`](docs/methodology.md),
+[`docs/solar_array_methodology.md`](docs/solar_array_methodology.md),
+and [`docs/battery_sizing_methodology.md`](docs/battery_sizing_methodology.md)
+for the full write-ups.
 
 ## What's here
 
@@ -25,14 +26,17 @@ src/power_budget/     Core package (deterministic power/energy accounting)
   energy.py               Power-profile sampling + analytic energy integration
   budget.py                Per-mode power-budget table + orbit summary
   solar.py                  Solar-array sizing: sunlight-only energy closure (M2)
+  battery.py                 Battery sizing, DoD, SOC simulation (M3)
 tests/                 pytest suite (unit tests + invariant checks)
 scripts/
   mission_baseline.py    Baseline mission definition (orbit, modes, schedule)
   run_power_budget.py    M1: runs the load analysis, writes table + figures
   size_solar_array.py    M2: sizes the solar array, writes tables + figures
+  size_battery.py        M3: sizes the battery, writes tables + figures
 docs/
-  methodology.md               M1 methodology, equations, and assumptions
-  solar_array_methodology.md   M2 methodology, sizing equation, sensitivities
+  methodology.md                 M1 methodology, equations, and assumptions
+  solar_array_methodology.md     M2 methodology, sizing equation, sensitivities
+  battery_sizing_methodology.md  M3 methodology, DoD/SOC, timing experiment
 results/               Generated tables (CSV/MD), summaries (txt), figures (PNG)
 ```
 
@@ -46,6 +50,7 @@ pip install -e ".[dev]"
 pytest -q                            # run the test suite
 python scripts/run_power_budget.py   # M1: regenerate table + figures
 python scripts/size_solar_array.py   # M2: regenerate array sizing + figures
+python scripts/size_battery.py       # M3: regenerate battery sizing + figures
 ```
 
 Outputs land in `results/`:
@@ -59,6 +64,12 @@ Outputs land in `results/`:
 - `figures/m2_eclipse_sensitivity.png` — array power/area vs. eclipse fraction
 - `figures/m2_area_sensitivity.png` — array area vs. recharge efficiency / EOL degradation / cell efficiency
 - `figures/m2_ops_trade.png` — array area vs. communications duty and payload duty
+- `m3_battery_sizing.md` — battery withdrawal, DoD, EOL nameplate, selected capacity, recharge closure
+- `m3_eclipse_fraction_sweep.csv` — required battery capacity vs. eclipse fraction
+- `figures/m3_soc_profile.png` — battery state of charge over one orbit
+- `figures/m3_dod_sensitivity.png` — required capacity vs. maximum depth of discharge
+- `figures/m3_eclipse_sensitivity.png` — required capacity vs. eclipse fraction
+- `figures/m3_timing_trade.png` — same activity moved from sunlight to eclipse: energy unchanged, battery sizing is not
 
 ## Baseline mission (illustrative)
 
@@ -106,6 +117,43 @@ for the full derivation, and
 [`results/figures/m2_ops_trade.png`](results/figures/m2_ops_trade.png)
 for the strongest figures.
 
+## Battery sizing (Milestone 3)
+
+The battery must supply **withdrawn** energy (after discharge-path
+losses), not the load-side eclipse energy directly, and its capacity
+must respect an allowable depth of discharge, an explicit design
+margin, and end-of-life capacity retention — three separate,
+never-conflated factors.
+
+| Quantity | Value |
+|---|---:|
+| Eclipse load energy | 4.38 Wh |
+| Battery withdrawal (after 95% discharge efficiency) | **4.61 Wh** |
+| Allowable DoD | 25% |
+| Analytical minimum BOL nameplate capacity | 28.84 Wh |
+| Selected design capacity | **30.0 Wh** |
+| Minimum SOC over the baseline orbit | **84.6%** (well above the 75% DoD-limit line) |
+| Recharge closure | array supplies 7.72 Wh vs. 4.61 Wh required (**+67.2% margin, closes**) |
+
+Strongest sensitivity: required capacity scales **exactly inversely**
+with allowable DoD (`C ∝ 1/DoD_max`, verified to 1e-9) — halving the
+allowable cycling depth roughly doubles the battery. The sharpest
+systems-engineering result is the **activity-timing experiment**:
+moving one fixed 600 s / 10.2 W downlink pass from sunlight into
+eclipse leaves orbit-average power and total energy per orbit
+*unchanged* (7.159 W, 11.29 Wh, identical either way) while raising
+required battery capacity **15%** (16.07 → 18.46 Wh) — confirming that
+battery sizing depends on *when* energy is consumed, not just total
+duty cycle. Consistently, sweeping payload-imaging duration (which
+occurs entirely in sunlight in the baseline) leaves battery capacity
+completely unchanged even though it drives Milestone 2's array area.
+
+See [`docs/battery_sizing_methodology.md`](docs/battery_sizing_methodology.md)
+for the full derivation, and
+[`results/figures/m3_soc_profile.png`](results/figures/m3_soc_profile.png) /
+[`results/figures/m3_timing_trade.png`](results/figures/m3_timing_trade.png)
+for the strongest figures.
+
 ## Engineering conventions
 
 - SI base units throughout the core library (seconds, watts, joules);
@@ -122,5 +170,5 @@ for the strongest figures.
 
 1. ✅ **Milestone 1** — operating modes, orbit/eclipse geometry, energy balance
 2. ✅ **Milestone 2** — solar-array sizing and sunlight energy closure
-3. ⏳ Milestone 3 — battery sizing
+3. ✅ **Milestone 3** — battery sizing, depth of discharge, eclipse energy storage
 4. ⏳ Milestone 4+ — sensitivity analysis, margins, final report
