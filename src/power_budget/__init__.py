@@ -31,6 +31,33 @@ from power_budget.battery import (
     SOCProfile,
     size_battery,
 )
+from power_budget.integrated import (
+    EPSDesign,
+    eps_design_from_baseline,
+    MissionRequirement,
+    requirement_from_power_budget,
+    EPSMargins,
+    compute_margins,
+    NominalVerification,
+)
+from power_budget.robustness import (
+    UncertainParam,
+    UNCERTAINTY_PARAMS,
+    RealizationResult,
+    evaluate_realization,
+    nominal_params,
+    wilson_interval,
+    MonteCarloResult,
+    run_monte_carlo,
+    convergence_study,
+    sensitivity_ranking,
+    robust_corner_params,
+    evaluate_robust_corner,
+    classify_feasibility,
+    mission_operations_map,
+    hardware_trade_map,
+    scale_schedule_power,
+)
 
 __all__ = [
     "Mode",
@@ -48,6 +75,29 @@ __all__ = [
     "RechargeClosureResult",
     "SOCProfile",
     "size_battery",
+    "EPSDesign",
+    "eps_design_from_baseline",
+    "MissionRequirement",
+    "requirement_from_power_budget",
+    "EPSMargins",
+    "compute_margins",
+    "NominalVerification",
+    "UncertainParam",
+    "UNCERTAINTY_PARAMS",
+    "RealizationResult",
+    "evaluate_realization",
+    "nominal_params",
+    "wilson_interval",
+    "MonteCarloResult",
+    "run_monte_carlo",
+    "convergence_study",
+    "sensitivity_ranking",
+    "robust_corner_params",
+    "evaluate_robust_corner",
+    "classify_feasibility",
+    "mission_operations_map",
+    "hardware_trade_map",
+    "scale_schedule_power",
 ]
 
 __version__ = "0.1.0"
