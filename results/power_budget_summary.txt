@@ -1,0 +1,6 @@
+Orbit period 94.6 min (sunlight 60.9 min, eclipse 33.7 min, eclipse fraction 0.356)
+Orbit-average power: 8.79 W
+Peak power: 14.50 W
+Total energy/orbit: 13.85 Wh (49877 J)
+Sunlight energy: 9.47 Wh (avg 9.33 W)
+Eclipse energy: 4.38 Wh (avg 7.81 W)
