@@ -368,8 +368,18 @@ def fig1_integrated_timeline(pb, profile, design, path: Path) -> None:
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
 
     ax1.plot(t_min, p_w, drawstyle="steps-post", color="#1f6f8b", linewidth=1.4, label="bus load")
-    ax1.axhline(design.array_power_eol_w, color="#2e7d5b", linestyle="--", linewidth=1.2,
-                label=f"array EOL output = {design.array_power_eol_w:.1f} W")
+
+    # Array generation capability: physically zero during eclipse (no
+    # sunlight, no PV output) and at the design's EOL output during
+    # sunlight -- plotted as an actual generation trace, not a flat
+    # reference line spanning eclipse, so the figure cannot be read as
+    # implying solar generation during eclipse.
+    eclipse_start_min = ORBIT.eclipse_start_s / 60
+    eclipse_end_min = ORBIT.eclipse_end_s / 60
+    gen_t_min = [0.0, eclipse_start_min, eclipse_start_min, eclipse_end_min]
+    gen_p_w = [design.array_power_eol_w, design.array_power_eol_w, 0.0, 0.0]
+    ax1.plot(gen_t_min, gen_p_w, color="#2e7d5b", linestyle="--", linewidth=1.2,
+             label=f"array EOL generation (sunlight only) = {design.array_power_eol_w:.1f} W")
     ax1.axvspan(ORBIT.eclipse_start_s / 60, ORBIT.eclipse_end_s / 60, color="0.85", zorder=0)
     ax1.set_ylabel("Power [W]")
     ax1.set_title("Integrated nominal EPS timeline: load & generation, and battery SOC")
@@ -407,7 +417,11 @@ def fig2_monte_carlo(mc, design, path: Path) -> None:
 
     ax = axes[1]
     ax.hist(df["min_soc"].dropna() * 100, bins=40, color="#2e7d5b", edgecolor="white")
-    ax.axvline((1 - design.dod_max) * 100, color="#c1440e", linestyle="--", label="DoD_max limit")
+    soc_limit_pct = (1 - design.dod_max) * 100
+    ax.axvline(
+        soc_limit_pct, color="#c1440e", linestyle="--",
+        label=f"minimum SOC limit = {soc_limit_pct:.0f}% (DoD_max = {design.dod_max*100:.0f}%)",
+    )
     ax.set_xlabel("Minimum SOC [%]")
     ax.set_title("Minimum-SOC distribution")
     ax.legend(fontsize=8)
@@ -466,12 +480,24 @@ def fig3_sensitivity(sens_df: pd.DataFrame, path: Path) -> None:
 
 def fig4_operating_envelope(ops_df: pd.DataFrame, path: Path) -> None:
     pivot = ops_df.pivot(index="eclipse_fraction", columns="comms_duty_scale", values="feasibility")
-    color_map = {"infeasible": 0, "marginal": 1, "feasible": 2}
-    grid = pivot.replace(color_map).to_numpy(dtype=float)
+
+    # classify_feasibility() formally defines three categories
+    # (infeasible/marginal/feasible), but the colorbar should only show
+    # the categories genuinely present in *this* generated grid -- an
+    # unused category would otherwise sit in the colorbar with no
+    # corresponding cells in the map, implying a distinction that
+    # doesn't exist in the plotted data.
+    category_order = ["infeasible", "marginal", "feasible"]
+    category_colors = {"infeasible": "#c1440e", "marginal": "#f2b134", "feasible": "#2e7d5b"}
+    present = [c for c in category_order if (pivot == c).to_numpy().any()]
+    index_map = {cat: i for i, cat in enumerate(present)}
+    grid = pivot.replace(index_map).to_numpy(dtype=float)
 
     fig, ax = plt.subplots(figsize=(8, 5.5))
-    cmap = matplotlib.colors.ListedColormap(["#c1440e", "#f2b134", "#2e7d5b"])
-    im = ax.imshow(grid, aspect="auto", origin="lower", cmap=cmap, vmin=0, vmax=2,
+    cmap = matplotlib.colors.ListedColormap([category_colors[c] for c in present])
+    n = len(present)
+    norm = matplotlib.colors.BoundaryNorm([i - 0.5 for i in range(n + 1)], cmap.N)
+    im = ax.imshow(grid, aspect="auto", origin="lower", cmap=cmap, norm=norm,
                     extent=[pivot.columns.min(), pivot.columns.max(), pivot.index.min(), pivot.index.max()])
     ax.set_xlabel("Communications duty scale [x baseline]")
     ax.set_ylabel("Eclipse fraction [-]")
@@ -479,8 +505,8 @@ def fig4_operating_envelope(ops_df: pd.DataFrame, path: Path) -> None:
     ax.axhline(0.356, color="black", linestyle=":", linewidth=1, label="baseline eclipse fraction")
     ax.axvline(1.0, color="black", linestyle="--", linewidth=1, label="baseline comms duty")
     ax.legend(loc="upper left", fontsize=8, framealpha=0.9)
-    cbar = fig.colorbar(im, ax=ax, ticks=[0.33, 1.0, 1.67])
-    cbar.ax.set_yticklabels(["infeasible", "marginal", "feasible"])
+    cbar = fig.colorbar(im, ax=ax, ticks=range(n))
+    cbar.ax.set_yticklabels(present)
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
@@ -502,7 +528,8 @@ def fig5_hardware_trade(trade_nominal, trade_corner, minimum_design, final_desig
         ax.set_ylabel("Battery capacity [Wh]")
         ax.set_title(title)
         ax.scatter([minimum_design.array_area_m2], [minimum_design.battery_capacity_bol_wh],
-                   marker="x", color="white", s=90, linewidths=2.5, label="M2/M3 analytical minimum")
+                   marker="x", color="white", s=90, linewidths=2.5,
+                   label="Pre-robustness M2/M3 design (0.0654 m², 30 Wh)")
         ax.scatter([final_design.array_area_m2], [final_design.battery_capacity_bol_wh],
                    marker="*", color="white", s=200, edgecolor="black", linewidths=0.8, label="Final selected")
         ax.legend(loc="lower right", fontsize=7.5, framealpha=0.9)
