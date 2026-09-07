@@ -18,6 +18,12 @@ from power_budget.modes import Mode
 from power_budget.orbit import OrbitGeometry
 from power_budget.schedule import ScheduleEntry, OrbitSchedule
 from power_budget.budget import PowerBudget, build_power_budget
+from power_budget.solar import (
+    SolarArrayConfig,
+    SolarArraySizingResult,
+    EnergyClosureResult,
+    size_solar_array,
+)
 
 __all__ = [
     "Mode",
@@ -26,6 +32,10 @@ __all__ = [
     "OrbitSchedule",
     "PowerBudget",
     "build_power_budget",
+    "SolarArrayConfig",
+    "SolarArraySizingResult",
+    "EnergyClosureResult",
+    "size_solar_array",
 ]
 
 __version__ = "0.1.0"
