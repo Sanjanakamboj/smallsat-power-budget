@@ -41,7 +41,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from power_budget.battery import BatteryConfig, simulate_orbit_soc  # noqa: E402
+from power_budget.battery import BatteryConfig, simulate_orbit_soc, size_battery  # noqa: E402
 from power_budget.budget import build_power_budget  # noqa: E402
 from power_budget.integrated import (  # noqa: E402
     EPSDesign,
@@ -50,8 +50,6 @@ from power_budget.integrated import (  # noqa: E402
     requirement_from_power_budget,
 )
 from power_budget.robustness import (  # noqa: E402
-    UNCERTAINTY_PARAMS,
-    classify_feasibility,
     convergence_study,
     evaluate_realization,
     evaluate_robust_corner,
@@ -91,7 +89,7 @@ def compute_baseline_design() -> tuple[EPSDesign, EPSDesign]:
     """Return (M2/M3 analytical-minimum design, final escalated design)."""
     pb = build_power_budget(BASELINE_SCHEDULE, ORBIT)
     solar_result = size_solar_array(pb, SOLAR_CFG)
-    battery_result = size_battery_wrapper(pb, solar_result)
+    battery_result = size_battery(pb, solar_result, BATT_CFG)
     minimum_design = eps_design_from_baseline(solar_result, battery_result)
 
     final_design = EPSDesign(
@@ -106,12 +104,6 @@ def compute_baseline_design() -> tuple[EPSDesign, EPSDesign]:
         eta_discharge=minimum_design.eta_discharge,
     )
     return minimum_design, final_design
-
-
-def size_battery_wrapper(pb, solar_result):
-    from power_budget.battery import size_battery
-
-    return size_battery(pb, solar_result, BATT_CFG)
 
 
 # ---------------------------------------------------------------------------
@@ -157,10 +149,6 @@ def main() -> None:
     FIGURES_DIR.mkdir(exist_ok=True)
 
     pb = build_power_budget(BASELINE_SCHEDULE, ORBIT)
-    solar_result = size_solar_array(pb, SOLAR_CFG)
-    from power_budget.battery import size_battery
-
-    battery_result = size_battery(pb, solar_result, BATT_CFG)
     minimum_design, final_design = compute_baseline_design()
 
     print("=== Milestone 4: Integrated EPS Robustness & Final Sizing ===\n")
@@ -299,8 +287,10 @@ def main() -> None:
           f"{mc.ci95[0]*100:.2f}-{mc.ci95[1]*100:.2f}%)")
     if mc.failure_mode_counts:
         dominant = max(mc.failure_mode_counts, key=mc.failure_mode_counts.get)
-        print(f"Dominant failure mode:           {dominant} ({mc.failure_mode_counts[dominant]} of "
-              f"{N_MC - mc.n_pass} failures)")
+        n_failures = N_MC - mc.n_pass
+        caveat = " (too few failures to establish a statistically dominant mode)" if n_failures < 10 else ""
+        print(f"Observed failure mode(s):        {dominant} ({mc.failure_mode_counts[dominant]} of "
+              f"{n_failures} failures){caveat}")
 
 
 def write_final_table(pb, requirement, minimum_design, final_design, margins, profile, corner, mc) -> Path:
@@ -408,7 +398,7 @@ def fig2_monte_carlo(mc, design, path: Path) -> None:
     fig, axes = plt.subplots(1, 3, figsize=(13, 4.2))
 
     ax = axes[0]
-    ax.hist(df["solar_energy_margin"].dropna(), bins=40, color="#1f6f8b", edgecolor="white")
+    ax.hist(df["recharge_margin"].dropna(), bins=40, color="#1f6f8b", edgecolor="white")
     ax.axvline(1.0, color="#c1440e", linestyle="--", label="closure limit (1.0x)")
     ax.set_xlabel("Recharge closure margin [-]")
     ax.set_ylabel("Realizations")

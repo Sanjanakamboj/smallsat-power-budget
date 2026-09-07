@@ -21,17 +21,18 @@ commercial hardware is selected or implied anywhere.
 
 ## 2. Final EPS recommendation
 
-| | Analytical minimum | **Final selected** |
+| | M2 analytical / M3 selected (pre-robustness) | **Final selected** |
 |---|---:|---:|
-| Solar-array area | 0.0654 m² | **0.085 m²** |
+| Solar-array area | 0.0654 m² (M2 analytical minimum) | **0.085 m²** |
 | Array EOL electrical output | 19.30 W | **25.07 W** |
-| Battery BOL nameplate capacity | 30.0 Wh | **35.0 Wh** |
+| Battery BOL nameplate capacity | 30.0 Wh (M3 selected, rounded from 28.84 Wh) | **35.0 Wh** |
 | Battery EOL capacity | 24.0 Wh | **28.0 Wh** |
 | Deterministic robust-corner check | **FAILS** (solar deficit + DoD exceeded) | **PASSES** |
 | Monte Carlo closure probability (N=10,000) | not applicable | **99.99%** (95% CI 99.94–100.00%) |
 
-The final design is the M2/M3 analytical minimum, escalated by the
-smallest practical increment (array +30%, battery +17%, each rounded
+The final design escalates the M2 analytical-minimum array and the
+M3-selected battery by the smallest practical increment (array +30%,
+battery +17% relative to the 30.0 Wh M3 selection, each rounded
 to that milestone's own stated granularity) that closes a single,
 documented, deterministic robust-design corner — not arbitrary
 conservatism. See [§8](#8-integrated-robustness-milestone-4) for the
@@ -58,7 +59,10 @@ full derivation.
    needed to grow, not just one.
 4. **The final, modestly escalated design (0.085 m² / 35 Wh) closes
    99.99% of a 10,000-realization Monte Carlo robustness campaign**
-   and passes the deterministic corner with margin.
+   (conditional on the representative, independent uncertainty model
+   in [§8](#8-integrated-robustness-milestone-4) — not a calibrated
+   on-orbit reliability figure) and passes the deterministic corner
+   with margin.
 
 ## 4. Baseline mission
 
@@ -129,10 +133,17 @@ above): [`docs/battery_sizing_methodology.md`](docs/battery_sizing_methodology.m
 
 `EPSDesign` (`src/power_budget/integrated.py`) represents the fixed,
 selected hardware separately from any one mission scenario's
-requirement, with four explicit, non-collapsed margins (solar energy,
-array power, battery energy, recharge time) — never one ambiguous "EPS
-margin," and never double-counting the design margins already baked
-into the M2/M3-selected area/capacity.
+requirement, with four explicit, non-collapsed margins — never one
+ambiguous "EPS margin," and never double-counting the design margins
+already baked into the M2/M3-selected area/capacity. For the final
+design against the nominal baseline mission:
+
+| Margin | Value |
+|---|---:|
+| Solar energy margin | **1.624×** |
+| Array power margin | **1.624×** |
+| Battery energy margin | **1.517×** |
+| Recharge-time margin | **3.277×** |
 
 **Uncertainty model.** Eleven parameters — every one already present
 in M1–M3 (load level, duty cycles, eclipse fraction, cell efficiency,
@@ -153,8 +164,9 @@ one of five distinct failure modes.
 
 **Deterministic robust corner:** one defensible scenario (each
 parameter shifted ~1–2σ unfavorably, not stacked at absolute
-extremes). The 0.0654 m²/30 Wh analytical minimum **fails** it via two
-independent failure modes; the escalated 0.085 m²/35 Wh final design
+extremes). The 0.0654 m² M2-analytical / 30 Wh M3-selected pre-robustness
+design **fails** it via two independent failure modes; the escalated
+0.085 m²/35 Wh final design
 **passes** with margin. See the hardware trade-map figure below — the
 single strongest result of this milestone.
 
@@ -167,10 +179,14 @@ single strongest result of this milestone.
 For the fixed final design, a 2D feasibility sweep over eclipse
 fraction (0.20–0.50) and communications duty (0.5×–4.5× baseline)
 shows the design remains feasible across virtually the entire
-plausible envelope — infeasibility appears only where very high
-eclipse fraction (>~0.46) combines with very high communications duty
-(>~2.3× baseline), well outside the baseline mission's operating
-point. See [`results/figures/m4_operating_envelope.png`](results/figures/m4_operating_envelope.png).
+plausible envelope — every combination is feasible for eclipse
+fraction up to 0.425, at any communications duty up to 4.5× tested.
+Infeasibility appears only where eclipse fraction reaches ~0.46–0.50
+*combined with* communications duty at or above ~2.5–3.0× baseline
+(the exact threshold depends on eclipse fraction), well outside the
+baseline mission's own operating point (eclipse fraction 0.356,
+communications duty 1.0×). See
+[`results/figures/m4_operating_envelope.png`](results/figures/m4_operating_envelope.png).
 
 ## 10. Verification / testing
 
@@ -213,8 +229,15 @@ docs/
   solar_array_methodology.md       M2 methodology, sizing equation, sensitivities
   battery_sizing_methodology.md    M3 methodology, DoD/SOC, timing experiment
   integrated_eps_methodology.md    M4 methodology, uncertainty model, robustness
+  final_summary.md                 Standalone engineering handoff summary
 results/                 Generated tables (CSV/MD), summaries, figures (PNG)
+LICENSE                 MIT
 ```
+
+A concise, standalone engineering handoff (mission baseline, final
+recommendation, key equations/margins, verification status,
+assumptions, and limitations in one page) lives at
+[`docs/final_summary.md`](docs/final_summary.md).
 
 ## 12. Reproduction
 
@@ -254,7 +277,11 @@ headline numbers to stdout.
 Full limitations lists live in each milestone's methodology document
 under `docs/`.
 
-## 14. Project status
+## 14. License
+
+[MIT](LICENSE).
+
+## 15. Project status
 
 All four planned milestones are complete:
 
@@ -262,3 +289,5 @@ All four planned milestones are complete:
 2. ✅ **Milestone 2** — solar-array sizing and sunlight energy closure
 3. ✅ **Milestone 3** — battery sizing, depth of discharge, eclipse energy storage
 4. ✅ **Milestone 4** — integrated robustness, margin rollup, final sizing recommendation
+
+The project, including this release audit, is complete.

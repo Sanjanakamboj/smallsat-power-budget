@@ -37,8 +37,7 @@ model (see `docs/integrated_eps_methodology.md`).
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Callable
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -199,7 +198,12 @@ class RealizationResult:
     recharge_ok: bool
     passed: bool
     failure_mode: str | None  # None if passed
-    solar_energy_margin: float
+    # Available sunlight recharge surplus / battery-side withdrawal
+    # (M3's RechargeClosureResult basis) -- NOT the same quantity as
+    # integrated.EPSMargins.solar_energy_margin (M2's combined
+    # sunlight-load + eclipse-recharge basis). See
+    # docs/integrated_eps_methodology.md for the distinction.
+    recharge_margin: float
     dod_actual: float
     min_soc: float
     recharge_utilization: float  # t_recharge / t_sunlight (nan if undefined)
@@ -260,7 +264,7 @@ def evaluate_realization(design: EPSDesign, params: dict[str, float]) -> Realiza
         solar_config=solar_cfg,
     )
     energy_ok = closure.closes
-    solar_energy_margin = (
+    recharge_margin = (
         closure.available_recharge_j / closure.required_j if closure.required_j > 0 else float("inf")
     )
 
@@ -292,7 +296,7 @@ def evaluate_realization(design: EPSDesign, params: dict[str, float]) -> Realiza
         return RealizationResult(
             params=params, energy_ok=energy_ok, dod_ok=False, recharge_ok=False,
             passed=passed, failure_mode=failure_mode,
-            solar_energy_margin=solar_energy_margin, dod_actual=float("nan"),
+            recharge_margin=recharge_margin, dod_actual=float("nan"),
             min_soc=float("nan"), recharge_utilization=float("nan"),
         )
 
@@ -315,7 +319,7 @@ def evaluate_realization(design: EPSDesign, params: dict[str, float]) -> Realiza
     return RealizationResult(
         params=params, energy_ok=energy_ok, dod_ok=dod_ok, recharge_ok=recharge_ok,
         passed=passed, failure_mode=failure_mode,
-        solar_energy_margin=solar_energy_margin, dod_actual=dod_actual,
+        recharge_margin=recharge_margin, dod_actual=dod_actual,
         min_soc=min_soc, recharge_utilization=recharge_utilization,
     )
 
@@ -378,7 +382,7 @@ def run_monte_carlo(design: EPSDesign, n: int = 10000, seed: int = 42) -> MonteC
         row = dict(params)
         row["passed"] = r.passed
         row["failure_mode"] = r.failure_mode
-        row["solar_energy_margin"] = r.solar_energy_margin
+        row["recharge_margin"] = r.recharge_margin
         row["dod_actual"] = r.dod_actual
         row["min_soc"] = r.min_soc
         row["recharge_utilization"] = r.recharge_utilization
@@ -420,7 +424,7 @@ def convergence_study(
                 "ci95_lo": lo,
                 "ci95_hi": hi,
                 "ci95_width": hi - lo,
-                "p10_solar_margin": prefix["solar_energy_margin"].quantile(0.10),
+                "p10_solar_margin": prefix["recharge_margin"].quantile(0.10),
             }
         )
     return pd.DataFrame(rows)
@@ -443,7 +447,7 @@ def sensitivity_ranking(design: EPSDesign) -> pd.DataFrame:
     """
     base = nominal_params()
     base_result = evaluate_realization(design, base)
-    base_margin = base_result.solar_energy_margin
+    base_margin = base_result.recharge_margin
     base_dod = base_result.dod_actual
 
     rows = []
@@ -456,7 +460,7 @@ def sensitivity_ranking(design: EPSDesign) -> pd.DataFrame:
         r_plus = evaluate_realization(design, plus)
         r_minus = evaluate_realization(design, minus)
 
-        d_margin = r_plus.solar_energy_margin - r_minus.solar_energy_margin
+        d_margin = r_plus.recharge_margin - r_minus.recharge_margin
         norm_margin_sens = d_margin / (2 * base_margin) if base_margin else float("nan")
 
         d_dod = r_plus.dod_actual - r_minus.dod_actual
@@ -516,7 +520,7 @@ def classify_feasibility(result: RealizationResult, headroom_threshold: float = 
     """
     if not result.passed:
         return "infeasible"
-    energy_headroom = result.solar_energy_margin - 1.0
+    energy_headroom = result.recharge_margin - 1.0
     # DoD headroom relative to the allowable limit is not included here as
     # a third independent factor because RealizationResult does not carry
     # design.dod_max directly; energy margin and recharge headroom already
@@ -550,7 +554,7 @@ def mission_operations_map(
                     "comms_duty_scale": float(comms),
                     "passed": r.passed,
                     "failure_mode": r.failure_mode,
-                    "solar_energy_margin": r.solar_energy_margin,
+                    "recharge_margin": r.recharge_margin,
                     "dod_actual": r.dod_actual,
                     "feasibility": classify_feasibility(r),
                 }

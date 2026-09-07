@@ -1,4 +1,4 @@
-eclipse_fraction,comms_duty_scale,passed,failure_mode,solar_energy_margin,dod_actual,feasibility
+eclipse_fraction,comms_duty_scale,passed,failure_mode,recharge_margin,dod_actual,feasibility
 0.2,0.5,True,,6.401742302475621,0.09126315789473682,feasible
 0.2,1.0,True,,5.73266388457474,0.10191478696741851,feasible
 0.2,1.5,True,,5.66321531328584,0.10316457811194657,feasible

@@ -1,5 +1,3 @@
-import math
-
 import pytest
 
 from power_budget.budget import build_power_budget

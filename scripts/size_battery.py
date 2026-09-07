@@ -34,13 +34,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from power_budget.battery import (  # noqa: E402
-    BatteryConfig,
-    bol_nameplate_capacity_j,
-    design_capacity_eol_j,
-    raw_capacity_j,
-    size_battery,
-)
+from power_budget.battery import BatteryConfig, size_battery  # noqa: E402
 from power_budget.budget import build_power_budget  # noqa: E402
 from power_budget.orbit import OrbitGeometry  # noqa: E402
 from power_budget.schedule import OrbitSchedule, ScheduleEntry  # noqa: E402

@@ -102,7 +102,7 @@ def test_nominal_realization_passes(baseline_design):
     r = evaluate_realization(baseline_design, nominal_params())
     assert r.passed
     assert r.failure_mode is None
-    assert r.solar_energy_margin > 1.0
+    assert r.recharge_margin > 1.0
     assert 0.0 <= r.dod_actual <= baseline_design.dod_max
 
 
@@ -126,7 +126,7 @@ def test_increased_load_cannot_improve_closure(baseline_design):
     high["load_scale"] = 1.1
     r_low = evaluate_realization(baseline_design, low)
     r_high = evaluate_realization(baseline_design, high)
-    assert r_high.solar_energy_margin <= r_low.solar_energy_margin
+    assert r_high.recharge_margin <= r_low.recharge_margin
 
 
 def test_increased_eclipse_fraction_cannot_improve_storage_requirement(baseline_design):
@@ -158,7 +158,7 @@ def test_larger_array_cannot_reduce_solar_feasibility(baseline_design):
     r_small = evaluate_realization(small, corner)
     r_big = evaluate_realization(big, corner)
     # bigger array must not have a worse (lower) solar margin
-    assert r_big.solar_energy_margin >= r_small.solar_energy_margin
+    assert r_big.recharge_margin >= r_small.recharge_margin
 
 
 def test_larger_battery_cannot_reduce_battery_feasibility(baseline_design):

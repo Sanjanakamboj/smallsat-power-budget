@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "power-budget"
 version = "0.1.0"
-description = "Smallsat electrical power system (EPS) sizing package: operating-mode power budgets, solar-array sizing, and battery sizing."
+description = "Smallsat electrical power system (EPS) sizing package: operating-mode power budgets, solar-array and battery sizing, and integrated Monte Carlo robustness analysis."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -19,7 +19,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4",
-    "pytest-cov>=4.1",
 ]
 
 [tool.setuptools.packages.find]

@@ -65,18 +65,24 @@ selection time (Milestones 2 and 3). Milestone 4:
 
 ## 4. Reconciling the analytical minimum vs. the selected design
 
-M2's continuous analytical minimum array area is **0.0654 m²**; M3's
-analytical minimum BOL battery capacity, after M3's own 5 Wh rounding
-rule, is **30.0 Wh**. Milestone 4 tests this `minimum_design` (built
+M2's continuous analytical minimum array area is **0.0654 m²** —
+unrounded, the direct output of M2's sizing equation. M3's battery
+capacity is a different kind of quantity: its analytical minimum BOL
+nameplate requirement is 28.84 Wh, which M3 then rounds up (its own,
+separately stated 5 Wh rounding rule) to a **selected** capacity of
+**30.0 Wh**. This document calls the pre-robustness pair
+`minimum_design` (0.0654 m² array / 30.0 Wh battery) throughout — an
+M2-analytical / M3-selected pairing, not two analytical minima — built
 directly from the accepted M2/M3 results via
-`integrated.eps_design_from_baseline`) against one deterministic robust
-corner (§5) — it fails, on two independent criteria (§9) — and
-escalates only the capabilities shown to be inadequate, to a **final
-selected design of 0.085 m² / 35 Wh** (§9). The escalation:
+`integrated.eps_design_from_baseline`. Milestone 4 tests `minimum_design`
+against one deterministic robust corner (§11) — it fails, on two
+independent criteria (§11) — and escalates only the capabilities shown
+to be inadequate, to a **final selected design of 0.085 m² / 35 Wh**
+(§11). The escalation:
 
 - Array area: rounded to the nearest 0.005 m² above the corner's own
   minimum-sufficient area (~0.078 m²) plus headroom — a modest,
-  stated increment (not an arbitrary choice; see §9's derivation
+  stated increment (not an arbitrary choice; see §11's derivation
   table, `results/m4_escalation_derivation.csv`).
 - Battery capacity: rounded to the nearest 5 Wh (the same rounding
   granularity M3 already established) above the corner's own
@@ -183,10 +189,24 @@ same seed always reproduces the same draws and outcomes,
 |---|---:|
 | Closure probability | **99.99%** |
 | 95% Wilson CI | **[99.94%, 100.00%]** |
-| Dominant failure mode | `solar_energy_deficit` (1 of 1 failures) |
+| Observed failure mode | `solar_energy_deficit` (1 of 1 failures) |
 | Median solar recharge margin | ≈2.7x |
 | Median minimum SOC | ≈84% |
 | Median recharge utilization | ≈30% of sunlight |
+
+This 99.99% closure probability is conditional on the uncertainty
+model of §5-6 (representative, independent, bounded-normal
+distributions) — it is not a statement about the true probability the
+physical spacecraft would fail on orbit. With only a single failed
+realization in 10,000, the "solar_energy_deficit" tag should be read
+as *the one observed failure mode*, not as a statistically established
+dominant failure mode; a much larger campaign (or a campaign run
+against a smaller, less-margined design, as in §11) would be needed to
+characterize the *relative* frequency of failure modes with any
+confidence. The deterministic robust corner (§11) is not redundant
+with this campaign -- it complements it by checking one specific,
+reasoned combination of unfavorable conditions exactly, rather than
+relying on that combination arising by chance in a random draw.
 
 The confidence interval uses the **Wilson score interval**
 (`robustness.wilson_interval`), which stays well-behaved near `p≈1`
@@ -281,12 +301,14 @@ and the hardware trade map (§15) confirm:
 all else nominal, classifying each cell `feasible` / `marginal` /
 `infeasible` (marginal: passes but worst headroom <10%, a stated,
 transparent rule in `robustness.classify_feasibility`). For the final
-design, the entire baseline-representative region (eclipse fraction up
-to ~0.46 at any communications duty, or communications duty up to
-~2.3x at any eclipse fraction up to 0.50) is feasible; infeasibility
-only appears in the corner of very high eclipse fraction (>~0.46)
-*combined with* very high communications duty (>~2.3x baseline) — a
-combined stress the baseline mission is nowhere near.
+design, the entire tested region is feasible for eclipse fraction up
+to 0.425 at any communications duty up to 4.5x baseline; infeasibility
+appears only when eclipse fraction reaches ~0.46-0.50 *combined with*
+communications duty at or above ~2.5-3.0x baseline (the exact
+threshold depends on eclipse fraction: >=3.0x at eclipse fraction
+0.4625, >=2.5x at eclipse fraction 0.50) — a combined stress far
+beyond the baseline mission's own operating point (eclipse fraction
+0.356, communications duty 1.0x).
 
 ## 15. Hardware trade map
 
@@ -300,11 +322,11 @@ selected design sits inside the feasible region under **both**.
 
 ## 16. Final recommendation
 
-| | Analytical minimum | Final selected |
+| | M2 analytical / M3 selected (pre-robustness) | Final selected (post-robustness) |
 |---|---:|---:|
-| Array area | 0.0654 m² | **0.085 m²** |
+| Array area | 0.0654 m² (M2 analytical minimum) | **0.085 m²** |
 | Array EOL output | 19.30 W | **25.07 W** |
-| Battery BOL capacity | 30.0 Wh | **35.0 Wh** |
+| Battery BOL capacity | 30.0 Wh (M3 selected, rounded from 28.84 Wh) | **35.0 Wh** |
 | Battery EOL capacity | 24.0 Wh | **28.0 Wh** |
 | Robust corner | FAIL | **PASS** |
 | Monte Carlo closure | (not applicable to unmargined design) | **99.99%** |

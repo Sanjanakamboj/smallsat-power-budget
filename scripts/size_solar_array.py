@@ -34,19 +34,10 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from power_budget.budget import build_power_budget  # noqa: E402
-from power_budget.modes import Mode  # noqa: E402
+from power_budget.budget import PowerBudget, build_power_budget  # noqa: E402
 from power_budget.orbit import OrbitGeometry  # noqa: E402
 from power_budget.schedule import OrbitSchedule, ScheduleEntry  # noqa: E402
-from power_budget.solar import (  # noqa: E402
-    SolarArrayConfig,
-    bol_power_density_w_m2,
-    eol_power_density_w_m2,
-    required_array_area_m2,
-    required_array_power_design_w,
-    required_array_power_raw_w,
-    size_solar_array,
-)
+from power_budget.solar import SolarArrayConfig, size_solar_array  # noqa: E402
 
 from mission_baseline import (  # noqa: E402
     BASELINE_SCHEDULE,
@@ -73,7 +64,7 @@ def compute_baseline():
 # ---------------------------------------------------------------------------
 # Sensitivity sweeps
 # ---------------------------------------------------------------------------
-def _budget_for_eclipse_fraction(f_e: float) -> "PowerBudget":
+def _budget_for_eclipse_fraction(f_e: float) -> PowerBudget:
     """Single-mode (nominal-only) orbit at eclipse fraction f_e, holding
     the orbit period and mode power fixed -- isolates the effect of
     eclipse fraction alone on array sizing."""
